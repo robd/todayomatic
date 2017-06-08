@@ -1,17 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Google Calendar API Quickstart</title>
+  <title>Google Calendar Room Finder</title>
   <meta charset='utf-8' />
+
+  <style>
+    body { font-family: sans-serif; }
+    span { padding-right: .5em; }
+  </style>
 </head>
 <body>
-<p>Google Calendar API Quickstart</p>
+<h1>Google Calendar Room Finder</h1>
 
 <!--Add buttons to initiate auth sequence and sign out-->
 <button id="authorize-button" style="display: none;">Authorize</button>
 <button id="signout-button" style="display: none;">Sign Out</button>
 
-<pre id="content"></pre>
+<div id="content"></div>
 
 <script type="text/javascript">
     // Client ID and API key from the Developer Console
@@ -62,7 +67,7 @@
         if (isSignedIn) {
             authorizeButton.style.display = 'none';
             signoutButton.style.display = 'block';
-            listUpcomingEvents();
+            listCalendars();
         } else {
             authorizeButton.style.display = 'block';
             signoutButton.style.display = 'none';
@@ -83,47 +88,57 @@
         gapi.auth2.getAuthInstance().signOut();
     }
 
-    /**
-     * Append a pre element to the body containing the given message
-     * as its text node. Used to display the results of the API call.
-     *
-     * @param {string} message Text to be placed in pre element.
-     */
-    function appendPre(message) {
+    function appendElement(tagName, elementContent) {
         var pre = document.getElementById('content');
-        var textContent = document.createTextNode(message + '\n');
-        pre.appendChild(textContent);
+        var span = document.createElement(tagName);
+        span.innerHTML = elementContent;
+        pre.appendChild(span);
     }
 
-    /**
-     * Print the summary and start datetime/date of the next ten events in
-     * the authorized user's calendar. If no events are found an
-     * appropriate message is printed.
-     */
-    function listUpcomingEvents() {
-        gapi.client.calendar.events.list({
-            'calendarId': 'primary',
-            'timeMin': (new Date()).toISOString(),
-            'showDeleted': false,
-            'singleEvents': true,
-            'maxResults': 10,
-            'orderBy': 'startTime'
-        }).then(function(response) {
-            var events = response.result.items;
-            appendPre('Upcoming events:');
+    function formatTime(eventStart) {
+        return eventStart.getHours() + ':' + eventStart.getMinutes();
+    }
 
-            if (events.length > 0) {
-                for (i = 0; i < events.length; i++) {
-                    var event = events[i];
-                    var when = event.start.dateTime;
-                    if (!when) {
-                        when = event.start.date;
+    function listCalendars() {
+        gapi.client.calendar.calendarList.list().then(function(response) {
+            var calendars = response.result.items;
+
+            var start = new Date();
+            var end = new Date();
+            end.setDate(end.getDate() + 1);
+            end.setHours(23,59,59,999);
+
+            var roomCalendars = calendars.filter(function(calendar) { return calendar.summary.match(/[rR]oom/) });
+            roomCalendars.forEach(function(calendar) {
+                gapi.client.calendar.events.list({
+                    'calendarId': calendar.id,
+                    'timeMin': start.toISOString(),
+                    'timeMax': end.toISOString(),
+                    'showDeleted': false,
+                    'singleEvents': true,
+                    'maxResults': 30,
+                    'orderBy': 'startTime'
+                }).then(function(response) {
+                    var events = response.result.items;
+                    console.log(events);
+                    appendElement('span', calendar.summary);
+
+                    if (events.length > 0) {
+                        for (i = 0; i < events.length; i++) {
+                            var event = events[i];
+                            var eventStart = new Date(event.start.dateTime);
+                            var eventEnd = new Date(event.end.dateTime);
+                            console.log(eventStart);
+                            appendElement('span', formatTime(eventStart) + '-' + formatTime(eventEnd) + ": " + event.summary);
+                        }
+                    } else {
+                        appendElement('span', 'No upcoming events found.');
                     }
-                    appendPre(event.summary + ' (' + when + ')')
-                }
-            } else {
-                appendPre('No upcoming events found.');
-            }
+                    appendElement('br', '');
+
+                });
+            });
+
         });
     }
 
