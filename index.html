@@ -1,23 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Google Calendar Room Finder</title>
+  <title>Todayomatic</title>
   <meta charset='utf-8' />
 
   <style>
     body { font-family: sans-serif; margin: 2em;}
-    #calendars-table {width: 100%; }
-    .calendar-row { margin-top: 3px;}
+    label { margin-top: 2em; display: block; font-size: 20px; }
+    input { font-size: 20px; }
+    #calendars-table { width: 100%; margin-top: 2em;}
+    .calendar-row { padding: 3px 0; border-top: 1px dotted lightgrey}
     .event, .available { border: 1px solid white; display: inline-block; overflow: hidden; vertical-align: top; padding: 3px; box-sizing: border-box; }
     .available { color: darkgrey; }
   </style>
 </head>
 <body>
-<h1>Google Calendar Room Finder</h1>
+<h1>Todayomatic</h1>
+
+<p>View all your calendars on a single page, filter your calendars by name, see who has free time and when.</p>
 
 <!--Add buttons to initiate auth sequence and sign out-->
 <button id="authorize-button" style="display: none;">Authorize</button>
 <button id="signout-button" style="display: none;">Sign Out</button>
+
+<label>Match calendar names (regex): <form method="get"><input type="text" id="calendar-name-input" name="calendarName"/> <input type="submit"/></form></label>
 
 <div id="calendars-table"></div>
 
@@ -35,6 +41,17 @@
     var authorizeButton = document.getElementById('authorize-button');
     var signoutButton = document.getElementById('signout-button');
 
+    function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+
+    var input = document.getElementById("calendar-name-input");
+    input.value = getUrlParameter(input.name);
+
+    var calendarNameRegex = new RegExp(input.value, 'i');
     /**
      *  On load, called to load the auth2 library and API client library.
      */
@@ -128,6 +145,14 @@
         ));
     }
 
+    function addTimeTd(calendarRow, start, end) {
+        calendarRow.appendChild(createElement(
+            'div',
+            formatTime(start),
+            {style: "width:" + percent(start, end) + "%;", class: 'available'}
+        ));
+    }
+
     function addAvailableTd(calendarRow, start, end) {
         calendarRow.appendChild(createElement(
             'div',
@@ -136,18 +161,45 @@
         ));
     }
 
+    function addHeaderTd(calendarRow, text) {
+        calendarRow.appendChild(createElement('div', text, {style: 'width:20%; display: inline-block;'}));
+    }
+
+    function createCalendarRow() {
+        return appendElement("div", '', {style: 'width:100%;', class: 'calendar-row'});
+    }
+
     function listCalendars() {
+        var startHour = 9;
+        var endHour = 17;
+
         gapi.client.calendar.calendarList.list().then(function(response) {
             var calendars = response.result.items;
 
             var dayStart = new Date();
-            dayStart.setHours(9,0,0,0);
+            dayStart.setHours(startHour,0,0,0);
 
             var dayEnd = new Date();
             dayEnd.setDate(dayEnd.getDate());
-            dayEnd.setHours(17,0,0,0);
+            dayEnd.setHours(endHour,0,0,0);
 
-            var roomCalendars = calendars.filter(function(calendar) { return calendar.summary.match(/[rR]oom/) });
+            var headerRow = createCalendarRow();
+
+            addHeaderTd(headerRow, '');
+
+            for(var i=startHour; i<endHour; i++ ) {
+                var headerTdStart = new Date();
+                headerTdStart.setDate(dayStart.getDate());
+                headerTdStart.setHours(i,0,0,0);
+
+                var headerTdEnd = new Date();
+                headerTdEnd.setDate(dayStart.getDate());
+                headerTdEnd.setHours(i+1,0,0,0);
+
+                addTimeTd(headerRow, headerTdStart, headerTdEnd);
+            }
+
+            var roomCalendars = calendars.filter(function(calendar) { return calendar.summary.match(calendarNameRegex) });
             roomCalendars.forEach(function(calendar) {
                 gapi.client.calendar.events.list({
                     'calendarId': calendar.id,
@@ -159,10 +211,9 @@
                     'orderBy': 'startTime'
                 }).then(function(response) {
                     var lastEventEnd = new Date(dayStart.getTime());
-
-                    var calendarRow = appendElement("div", '', {style: 'width:100%;', class: 'calendar-row'});
+                    var calendarRow = createCalendarRow();
                     var events = response.result.items;
-                    calendarRow.appendChild(createElement('div', calendar.summary, {style: 'width:20%; display: inline-block;'}));
+                    addHeaderTd(calendarRow, calendar.summary);
 
                     events.forEach(function (event) {
                         var eventStart = new Date(event.start.dateTime);
