@@ -201,6 +201,8 @@
 
             var roomCalendars = calendars.filter(function(calendar) { return calendar.summary.match(calendarNameRegex) });
             roomCalendars.forEach(function(calendar) {
+                var calendarRow = createCalendarRow();
+                addHeaderTd(calendarRow, calendar.summary);
                 gapi.client.calendar.events.list({
                     'calendarId': calendar.id,
                     'timeMin': dayStart.toISOString(),
@@ -211,9 +213,7 @@
                     'orderBy': 'startTime'
                 }).then(function(response) {
                     var lastEventEnd = new Date(dayStart.getTime());
-                    var calendarRow = createCalendarRow();
                     var events = response.result.items;
-                    addHeaderTd(calendarRow, calendar.summary);
 
                     events.forEach(function (event) {
                         var eventStart = new Date(event.start.dateTime);
