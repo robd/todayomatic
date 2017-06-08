@@ -5,11 +5,11 @@
   <meta charset='utf-8' />
 
   <style>
-    body { font-family: sans-serif; }
-    #calendars-table {width: 100%; box-sizing: border-box; }
-    .calendar-row { margin-top: 3px box-sizing: border-box;}
-    .event { border: 1px solid white; display: inline-block; overflow: hidden; ; vertical-align: top; padding: 3px; box-sizing: border-box;}
-    .available { display: inline-block; overflow: hidden; vertical-align: top; color: lightgrey; padding: 3px; box-sizing: border-box;}
+    body { font-family: sans-serif; margin: 2em;}
+    #calendars-table {width: 100%; }
+    .calendar-row { margin-top: 3px;}
+    .event, .available { border: 1px solid white; display: inline-block; overflow: hidden; vertical-align: top; padding: 3px; box-sizing: border-box; }
+    .available { color: darkgrey; }
   </style>
 </head>
 <body>
@@ -129,14 +129,11 @@
     }
 
     function addAvailableTd(calendarRow, start, end) {
-        var thePercent = percent(start, end);
-        if (thePercent > 0) {
-            calendarRow.appendChild(createElement(
-                'div',
-                (end - start) / (1000 * 60) + "mins",
-                {style: "width:" + thePercent + "%;", class: 'available'}
-            ));
-        }
+        calendarRow.appendChild(createElement(
+            'div',
+            (end - start) / (1000 * 60) + "mins",
+            {style: "width:" + percent(start, end) + "%;", class: 'available'}
+        ));
     }
 
     function listCalendars() {
@@ -169,13 +166,19 @@
 
                     events.forEach(function (event) {
                         var eventStart = new Date(event.start.dateTime);
-                        addAvailableTd(calendarRow, lastEventEnd, eventStart);
+                        if (lastEventEnd < eventStart) {
+                            addAvailableTd(calendarRow, lastEventEnd, eventStart);
+                        }
                         var eventEnd = new Date(event.end.dateTime);
-                        addEventTd(calendarRow, eventStart, eventEnd, calendar, event);
-                        lastEventEnd.setTime(eventEnd.getTime());
+                        if (lastEventEnd <= eventStart) { // Handle overlapping events
+                            addEventTd(calendarRow, eventStart, eventEnd, calendar, event);
+                            lastEventEnd.setTime(eventEnd.getTime());
+                        }
                     });
 
-                    addAvailableTd(calendarRow, lastEventEnd, dayEnd);
+                    if (lastEventEnd < dayEnd) {
+                        addAvailableTd(calendarRow, lastEventEnd, dayEnd);
+                    }
 
                 });
             });
