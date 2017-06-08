@@ -5,9 +5,9 @@
   <meta charset='utf-8' />
 
   <style>
-    body { font-family: sans-serif; margin: 2em;}
-    label { margin-top: 2em; display: block; font-size: 20px; }
-    input { font-size: 20px; }
+    body { font-family: sans-serif; margin: 2em; }
+    label { margin-top: 2em; display: block; ; }
+    input { font-size: 16px; margin-top: 6px}
     #calendars-table { width: 100%; margin-top: 2em;}
     .calendar-row { padding: 3px 0; border-top: 1px dotted lightgrey}
     .event, .available { border: 1px solid white; display: inline-block; overflow: hidden; vertical-align: top; padding: 3px; box-sizing: border-box; }
@@ -230,7 +230,6 @@
                     if (lastEventEnd < dayEnd) {
                         addAvailableTd(calendarRow, lastEventEnd, dayEnd);
                     }
-
                 });
             });
 
