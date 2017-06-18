@@ -81,12 +81,6 @@ function createElement(tagName, elementContent, attrs) {
   return span;
 }
 
-function appendElement(tagName, elementContent, attrs) {
-  var element = createElement(tagName, elementContent || '', attrs);
-  document.getElementById('calendars-table').appendChild(element);
-  return element;
-}
-
 function formatTime(eventStart) {
   return eventStart.getHours() + ':' + twoDigits(eventStart.getMinutes());
 }
@@ -145,8 +139,10 @@ function addHeaderTd(calendarRow, text) {
   calendarRow.appendChild(createElement('div', text, { style: 'width:20%; display: inline-block;' }));
 }
 
-function createCalendarRow() {
-  return appendElement('div', '', { style: 'width:100%;', class: 'calendar-row' });
+function appendCalendarRow() {
+  var element = createElement('div', '', { style: 'width:100%;', class: 'calendar-row' });
+  document.getElementById('calendars-table').appendChild(element);
+  return element;
 }
 
 function listCalendars() {
@@ -160,7 +156,7 @@ function listCalendars() {
   dayEnd.setDate(dayStart.getDate());
   dayEnd.setHours(endHour, 0, 0, 0);
 
-  const headerRow = createCalendarRow();
+  const headerRow = appendCalendarRow();
 
   addHeaderTd(headerRow, '');
 
@@ -179,7 +175,7 @@ function listCalendars() {
       return calendar.summary.match(calendarNameRegex);
     });
     matchingCalendars.forEach(function(calendar) {
-      const calendarRow = createCalendarRow();
+      const calendarRow = appendCalendarRow();
       addHeaderTd(calendarRow, calendar.summary);
       gapi.client.calendar.events
         .list({
