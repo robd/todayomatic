@@ -160,40 +160,36 @@ function createCalendarRow() {
 }
 
 function listCalendars() {
-  var startHour = 9;
-  var endHour = 17;
+  const startHour = 9;
+  const endHour = 17;
+
+  const dayStart = new Date();
+  dayStart.setHours(startHour, 0, 0, 0);
+
+  const dayEnd = new Date();
+  dayEnd.setDate(dayStart.getDate());
+  dayEnd.setHours(endHour, 0, 0, 0);
+
+  const headerRow = createCalendarRow();
+
+  addHeaderTd(headerRow, '');
+
+  for (var i = startHour; i < endHour; i++) {
+    const headerTdStart = new Date(dayStart.getTime());
+    headerTdStart.setHours(i, 0, 0, 0);
+
+    const headerTdEnd = new Date(dayStart.getTime());
+    headerTdEnd.setHours(i + 1, 0, 0, 0);
+
+    addTimeTd(headerRow, headerTdStart, headerTdEnd);
+  }
 
   gapi.client.calendar.calendarList.list().then(function(response) {
-    var calendars = response.result.items;
-
-    var dayStart = new Date();
-    dayStart.setHours(startHour, 0, 0, 0);
-
-    var dayEnd = new Date();
-    dayEnd.setDate(dayEnd.getDate());
-    dayEnd.setHours(endHour, 0, 0, 0);
-
-    var headerRow = createCalendarRow();
-
-    addHeaderTd(headerRow, '');
-
-    for (var i = startHour; i < endHour; i++) {
-      var headerTdStart = new Date();
-      headerTdStart.setDate(dayStart.getDate());
-      headerTdStart.setHours(i, 0, 0, 0);
-
-      var headerTdEnd = new Date();
-      headerTdEnd.setDate(dayStart.getDate());
-      headerTdEnd.setHours(i + 1, 0, 0, 0);
-
-      addTimeTd(headerRow, headerTdStart, headerTdEnd);
-    }
-
-    var roomCalendars = calendars.filter(function(calendar) {
+    const matchingCalendars = response.result.items.filter(function(calendar) {
       return calendar.summary.match(calendarNameRegex);
     });
-    roomCalendars.forEach(function(calendar) {
-      var calendarRow = createCalendarRow();
+    matchingCalendars.forEach(function(calendar) {
+      const calendarRow = createCalendarRow();
       addHeaderTd(calendarRow, calendar.summary);
       gapi.client.calendar.events
         .list({
@@ -206,15 +202,13 @@ function listCalendars() {
           orderBy: 'startTime',
         })
         .then(function(response) {
-          var lastEventEnd = new Date(dayStart.getTime());
-          var events = response.result.items;
-
-          events.forEach(function(event) {
-            var eventStart = new Date(event.start.dateTime);
+          const lastEventEnd = new Date(dayStart.getTime());
+          response.result.items.forEach(function(event) {
+            const eventStart = new Date(event.start.dateTime);
             if (lastEventEnd < eventStart) {
               addAvailableTd(calendarRow, lastEventEnd, eventStart, calendar);
             }
-            var eventEnd = new Date(event.end.dateTime);
+            const eventEnd = new Date(event.end.dateTime);
             if (lastEventEnd <= eventStart) {
               // Handle overlapping events
               addEventTd(calendarRow, eventStart, eventEnd, calendar, event);
