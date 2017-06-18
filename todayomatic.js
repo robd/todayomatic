@@ -116,7 +116,7 @@ function addEventDiv(calendarRow, eventStart, eventEnd, calendar, event) {
 
 function addTimeDiv(calendarRow, start, end) {
   calendarRow.appendChild(
-    createElement('div', formatTime(start), { style: 'width:' + percent(start, end) + '%;', class: 'available' })
+    createElement('div', formatTime(start), { style: 'width:' + percent(start, end) + '%;', class: 'time' })
   );
 }
 
