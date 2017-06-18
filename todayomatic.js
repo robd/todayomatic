@@ -15,7 +15,7 @@ function getUrlParameter(name) {
   name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
   var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
   var results = regex.exec(location.search);
-  return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+  return results === null ? null : decodeURIComponent(results[1].replace(/\+/g, ' '));
 }
 
 var input = document.getElementById('calendar-name-input');
@@ -168,13 +168,57 @@ function groupBy(xs, key) {
   }, []);
 }
 
+const MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+function formatDate(date) {
+  return DAY_NAMES[date.getDay()] + ' ' + date.getDate() + ' ' + MONTH_NAMES[date.getMonth()];
+}
+
+function dateHref(date) {
+  return { href: '?date=' + date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate() };
+}
+
 function listCalendars() {
   const body = document.body;
   const startHour = 9;
   const endHour = 17;
 
-  const dayStart = new Date();
+  const dateParam = getUrlParameter('date') || new Date().getTime();
+  const dayStart = new Date(dateParam);
   dayStart.setHours(startHour, 0, 0, 0);
+
+  body.appendChild(createElement('h2', formatDate(dayStart)));
+
+  const dateRow = createElement('div', '', { class: 'dates' });
+
+  const previousDay = new Date(dayStart.getTime());
+  previousDay.setDate(dayStart.getDate() - 1);
+  const nextDay = new Date(dayStart.getTime());
+  nextDay.setDate(dayStart.getDate() + 1);
+
+  [
+    createElement('a', formatDate(previousDay), dateHref(previousDay)),
+    createElement('a', formatDate(nextDay), dateHref(nextDay)),
+  ].forEach(function(element) {
+    return dateRow.appendChild(element);
+  });
+
+  body.appendChild(dateRow);
 
   const dayEnd = new Date();
   dayEnd.setDate(dayStart.getDate());
