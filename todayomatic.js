@@ -145,6 +145,20 @@ function appendCalendarRow() {
   return element;
 }
 
+// https://stackoverflow.com/questions/14446511/what-is-the-most-efficient-method-to-groupby-on-a-javascript-array-of-objects#comment64856953_34890276
+function groupBy(xs, key) {
+  return xs.reduce(function(rv, x) {
+    const v = key instanceof Function ? key(x) : x[key];
+    const el = rv.find(r => r && r.key === v);
+    if (el) {
+      el.values.push(x);
+    } else {
+      rv.push({ key: v, values: [x] });
+    }
+    return rv;
+  }, []);
+}
+
 function listCalendars() {
   const startHour = 9;
   const endHour = 17;
@@ -174,38 +188,51 @@ function listCalendars() {
     const matchingCalendars = response.result.items.filter(function(calendar) {
       return calendar.summary.match(calendarNameRegex);
     });
-    matchingCalendars.forEach(function(calendar) {
-      const calendarRow = appendCalendarRow();
-      addHeaderTd(calendarRow, calendar.summary);
-      gapi.client.calendar.events
-        .list({
-          calendarId: calendar.id,
-          timeMin: dayStart.toISOString(),
-          timeMax: dayEnd.toISOString(),
-          showDeleted: false,
-          singleEvents: true,
-          maxResults: 30,
-          orderBy: 'startTime',
-        })
-        .then(function(response) {
-          const lastEventEnd = new Date(dayStart.getTime());
-          response.result.items.forEach(function(event) {
-            const eventStart = new Date(event.start.dateTime);
-            if (lastEventEnd < eventStart) {
-              addAvailableTd(calendarRow, lastEventEnd, eventStart, calendar);
-            }
-            const eventEnd = new Date(event.end.dateTime);
-            if (lastEventEnd <= eventStart) {
-              // Handle overlapping events
-              addEventTd(calendarRow, eventStart, eventEnd, calendar, event);
-              lastEventEnd.setTime(eventEnd.getTime());
-            }
-          });
 
-          if (lastEventEnd < dayEnd) {
-            addAvailableTd(calendarRow, lastEventEnd, dayEnd, calendar);
-          }
+    groupBy(matchingCalendars, function(calendar) {
+      return calendar.id.split('@').pop(); // Suffix
+    }).forEach(function(groupedCals) {
+      groupedCals.values
+        .sort(function(cal1, cal2) {
+          return cal1.summary.localeCompare(cal2.summary);
+        })
+        .forEach(function(calendar) {
+          showCalendarRow(calendar, dayStart, dayEnd);
         });
     });
   });
+}
+
+function showCalendarRow(calendar, dayStart, dayEnd) {
+  const calendarRow = appendCalendarRow();
+  addHeaderTd(calendarRow, calendar.summary);
+  gapi.client.calendar.events
+    .list({
+      calendarId: calendar.id,
+      timeMin: dayStart.toISOString(),
+      timeMax: dayEnd.toISOString(),
+      showDeleted: false,
+      singleEvents: true,
+      maxResults: 30,
+      orderBy: 'startTime',
+    })
+    .then(function(response) {
+      const lastEventEnd = new Date(dayStart.getTime());
+      response.result.items.forEach(function(event) {
+        const eventStart = new Date(event.start.dateTime);
+        if (lastEventEnd < eventStart) {
+          addAvailableTd(calendarRow, lastEventEnd, eventStart, calendar);
+        }
+        const eventEnd = new Date(event.end.dateTime);
+        if (lastEventEnd <= eventStart) {
+          // Handle overlapping events
+          addEventTd(calendarRow, eventStart, eventEnd, calendar, event);
+          lastEventEnd.setTime(eventEnd.getTime());
+        }
+      });
+
+      if (lastEventEnd < dayEnd) {
+        addAvailableTd(calendarRow, lastEventEnd, dayEnd, calendar);
+      }
+    });
 }
