@@ -169,7 +169,7 @@ function groupBy(xs, key) {
 }
 
 function listCalendars() {
-  const allCalendarsDiv = document.getElementById('all-calendars');
+  const body = document.body;
   const startHour = 9;
   const endHour = 17;
 
@@ -194,7 +194,7 @@ function listCalendars() {
     addTimeDiv(headerRow, headerTdStart, headerTdEnd);
   }
 
-  allCalendarsDiv.appendChild(headerRow);
+  body.appendChild(headerRow);
 
   gapi.client.calendar.calendarList.list().then(function(response) {
     const matchingCalendars = response.result.items.filter(function(calendar) {
@@ -209,7 +209,7 @@ function listCalendars() {
           return cal1.summary.localeCompare(cal2.summary);
         })
         .forEach(function(calendar) {
-          allCalendarsDiv.appendChild(showCalendarRow(calendar, dayStart, dayEnd));
+          body.appendChild(showCalendarRow(calendar, dayStart, dayEnd));
         });
     });
   });
