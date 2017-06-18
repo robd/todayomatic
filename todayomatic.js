@@ -95,10 +95,21 @@ function percent(start, end) {
 }
 
 function addEventDiv(calendarRow, eventStart, eventEnd, calendar, event) {
+  const organizer = event.organizer ? event.organizer.name || event.organizer.email : 'Unknown';
+  const attendees = (event.attendees || [])
+    .filter(function(attendee) {
+      return !attendee.self;
+    })
+    .map(function(attendee) {
+      return attendee.displayName || attendee.email;
+    });
+  const summary = event.summary || 'Unknown';
+
   calendarRow.appendChild(
-    createElement('div', formatTime(eventStart) + '-' + formatTime(eventEnd) + ': ' + event.summary, {
+    createElement('div', formatTime(eventStart) + '-' + formatTime(eventEnd) + ': ' + summary, {
       style: 'width:' + percent(eventStart, eventEnd) + '%;  background-color: ' + calendar.backgroundColor,
       class: 'event',
+      title: summary + '\n\nOrganiser: ' + organizer + '\nAttending: ' + attendees.join(', '),
     })
   );
 }
@@ -136,7 +147,7 @@ function addAvailableDiv(calendarRow, start, end, calendar) {
 }
 
 function addHeaderDiv(calendarRow, text) {
-  calendarRow.appendChild(createElement('div', text, { style: 'width:20%; display: inline-block;' }));
+  calendarRow.appendChild(createElement('div', text, { class: 'header-row' }));
 }
 
 function createCalendarRowDiv() {
