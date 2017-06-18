@@ -71,14 +71,14 @@ function updateSigninStatus(isSignedIn) {
 }
 
 function createElement(tagName, elementContent, attrs) {
-  var span = document.createElement(tagName);
+  var element = document.createElement(tagName);
   for (var attr in attrs) {
     if (attrs.hasOwnProperty(attr)) {
-      span.setAttribute(attr, attrs[attr]);
+      element.setAttribute(attr, attrs[attr]);
     }
   }
-  span.innerHTML = elementContent;
-  return span;
+  element.innerHTML = elementContent;
+  return element;
 }
 
 function formatTime(eventStart) {
@@ -94,7 +94,7 @@ function percent(start, end) {
   return mins / 6;
 }
 
-function addEventTd(calendarRow, eventStart, eventEnd, calendar, event) {
+function addEventDiv(calendarRow, eventStart, eventEnd, calendar, event) {
   calendarRow.appendChild(
     createElement('div', formatTime(eventStart) + '-' + formatTime(eventEnd) + ': ' + event.summary, {
       style: 'width:' + percent(eventStart, eventEnd) + '%;  background-color: ' + calendar.backgroundColor,
@@ -103,7 +103,7 @@ function addEventTd(calendarRow, eventStart, eventEnd, calendar, event) {
   );
 }
 
-function addTimeTd(calendarRow, start, end) {
+function addTimeDiv(calendarRow, start, end) {
   calendarRow.appendChild(
     createElement('div', formatTime(start), { style: 'width:' + percent(start, end) + '%;', class: 'available' })
   );
@@ -122,7 +122,7 @@ function gcalDate(date) {
   );
 }
 
-function addAvailableTd(calendarRow, start, end, calendar) {
+function addAvailableDiv(calendarRow, start, end, calendar) {
   var a = createElement('a', (end - start) / (1000 * 60) + ' mins');
   a.href =
     'https://calendar.google.com/calendar/render?action=TEMPLATE&dates=' +
@@ -135,14 +135,12 @@ function addAvailableTd(calendarRow, start, end, calendar) {
   calendarRow.appendChild(div);
 }
 
-function addHeaderTd(calendarRow, text) {
+function addHeaderDiv(calendarRow, text) {
   calendarRow.appendChild(createElement('div', text, { style: 'width:20%; display: inline-block;' }));
 }
 
-function appendCalendarRow() {
-  var element = createElement('div', '', { style: 'width:100%;', class: 'calendar-row' });
-  document.getElementById('calendars-table').appendChild(element);
-  return element;
+function createCalendarRowDiv() {
+  return createElement('div', '', { style: 'width:100%;', class: 'calendar-row' });
 }
 
 // https://stackoverflow.com/questions/14446511/what-is-the-most-efficient-method-to-groupby-on-a-javascript-array-of-objects#comment64856953_34890276
@@ -160,6 +158,7 @@ function groupBy(xs, key) {
 }
 
 function listCalendars() {
+  const allCalendarsDiv = document.getElementById('all-calendars');
   const startHour = 9;
   const endHour = 17;
 
@@ -170,9 +169,9 @@ function listCalendars() {
   dayEnd.setDate(dayStart.getDate());
   dayEnd.setHours(endHour, 0, 0, 0);
 
-  const headerRow = appendCalendarRow();
+  const headerRow = createCalendarRowDiv();
 
-  addHeaderTd(headerRow, '');
+  addHeaderDiv(headerRow, '');
 
   for (var i = startHour; i < endHour; i++) {
     const headerTdStart = new Date(dayStart.getTime());
@@ -181,8 +180,10 @@ function listCalendars() {
     const headerTdEnd = new Date(dayStart.getTime());
     headerTdEnd.setHours(i + 1, 0, 0, 0);
 
-    addTimeTd(headerRow, headerTdStart, headerTdEnd);
+    addTimeDiv(headerRow, headerTdStart, headerTdEnd);
   }
+
+  allCalendarsDiv.appendChild(headerRow);
 
   gapi.client.calendar.calendarList.list().then(function(response) {
     const matchingCalendars = response.result.items.filter(function(calendar) {
@@ -197,15 +198,15 @@ function listCalendars() {
           return cal1.summary.localeCompare(cal2.summary);
         })
         .forEach(function(calendar) {
-          showCalendarRow(calendar, dayStart, dayEnd);
+          allCalendarsDiv.appendChild(showCalendarRow(calendar, dayStart, dayEnd));
         });
     });
   });
 }
 
 function showCalendarRow(calendar, dayStart, dayEnd) {
-  const calendarRow = appendCalendarRow();
-  addHeaderTd(calendarRow, calendar.summary);
+  const calendarRow = createCalendarRowDiv();
+  addHeaderDiv(calendarRow, calendar.summary);
   gapi.client.calendar.events
     .list({
       calendarId: calendar.id,
@@ -221,18 +222,19 @@ function showCalendarRow(calendar, dayStart, dayEnd) {
       response.result.items.forEach(function(event) {
         const eventStart = new Date(event.start.dateTime);
         if (lastEventEnd < eventStart) {
-          addAvailableTd(calendarRow, lastEventEnd, eventStart, calendar);
+          addAvailableDiv(calendarRow, lastEventEnd, eventStart, calendar);
         }
         const eventEnd = new Date(event.end.dateTime);
         if (lastEventEnd <= eventStart) {
           // Handle overlapping events
-          addEventTd(calendarRow, eventStart, eventEnd, calendar, event);
+          addEventDiv(calendarRow, eventStart, eventEnd, calendar, event);
           lastEventEnd.setTime(eventEnd.getTime());
         }
       });
 
       if (lastEventEnd < dayEnd) {
-        addAvailableTd(calendarRow, lastEventEnd, dayEnd, calendar);
+        addAvailableDiv(calendarRow, lastEventEnd, dayEnd, calendar);
       }
     });
+  return calendarRow;
 }

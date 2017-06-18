@@ -8,7 +8,7 @@
     body { font-family: sans-serif; margin: 2em; }
     label { margin-top: 2em; display: block; ; }
     input { font-size: 16px; margin-top: 6px}
-    #calendars-table { width: 100%; margin-top: 2em;}
+    #all-calendars { width: 100%; margin-top: 2em;}
     .calendar-row { padding: 3px 0; border-top: 1px dotted lightgrey}
     .event, .available { border: 1px solid white; display: inline-block; overflow: hidden; vertical-align: top; padding: 3px; box-sizing: border-box; }
     .available a { color: darkgrey; text-decoration: none; }
@@ -23,9 +23,9 @@
 <button id="authorize-button" style="display: none;">Authorize</button>
 <button id="signout-button" style="display: none;">Sign Out</button>
 
-<label>Match calendar names (regex): <form method="get"><input type="text" id="calendar-name-input" name="calendarName"/> <input type="submit"/></form></label>
+<label>Match calendar names (regex): <form><input id="calendar-name-input" name="calendarName"/> <input type="submit"/></form></label>
 
-<div id="calendars-table"></div>
+<div id="all-calendars"></div>
 
 <script type="text/javascript" src="todayomatic.js"></script>
 
