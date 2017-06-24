@@ -280,8 +280,9 @@ function showCalendarRow(calendar, dayStart, dayEnd) {
           addAvailableDiv(calendarRow, lastEventEnd, eventStart, calendar);
         }
         const eventEnd = new Date(event.end.dateTime);
-        if (lastEventEnd <= eventStart) {
-          // Handle overlapping events
+        // Do not show an event which overlaps a previous one
+        if (eventStart > lastEventEnd) {
+          if (eventEnd > dayEnd) eventEnd.setTime(dayEnd.getTime()); // Handle events which end out of day
           addEventDiv(calendarRow, eventStart, eventEnd, calendar, event);
           lastEventEnd.setTime(eventEnd.getTime());
         }
