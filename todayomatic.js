@@ -146,8 +146,8 @@ function addAvailableDiv(calendarRow, start, end, calendar) {
   calendarRow.appendChild(div);
 }
 
-function addHeaderDiv(calendarRow, text) {
-  calendarRow.appendChild(createElement('div', text, { class: 'header-row' }));
+function addRowHeadingDiv(calendarRow, text) {
+  calendarRow.appendChild(createElement('div', text, { class: 'row-heading' }));
 }
 
 function createCalendarRowDiv() {
@@ -226,7 +226,7 @@ function listCalendars() {
 
   const headerRow = createCalendarRowDiv();
 
-  addHeaderDiv(headerRow, '');
+  addRowHeadingDiv(headerRow, '');
 
   for (var i = startHour; i < endHour; i++) {
     const headerTdStart = new Date(dayStart.getTime());
@@ -261,7 +261,7 @@ function listCalendars() {
 
 function showCalendarRow(calendar, dayStart, dayEnd) {
   const calendarRow = createCalendarRowDiv();
-  addHeaderDiv(calendarRow, calendar.summary);
+  addRowHeadingDiv(calendarRow, calendar.summary);
   gapi.client.calendar.events
     .list({
       calendarId: calendar.id,
