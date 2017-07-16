@@ -193,17 +193,7 @@ function dateHref(date) {
   return { href: '?date=' + date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate() };
 }
 
-function listCalendars() {
-  const body = document.body;
-  const startHour = 9;
-  const endHour = 17;
-
-  const dateParam = getUrlParameter('date') || new Date().getTime();
-  const dayStart = new Date(dateParam);
-  dayStart.setHours(startHour, 0, 0, 0);
-
-  body.appendChild(createElement('h2', formatDate(dayStart)));
-
+function nextAndPreviousButtons(dayStart) {
   const dateRow = createElement('div', '', { class: 'dates' });
 
   const previousDay = new Date(dayStart.getTime());
@@ -215,10 +205,23 @@ function listCalendars() {
     createElement('a', formatDate(previousDay), dateHref(previousDay)),
     createElement('a', formatDate(nextDay), dateHref(nextDay)),
   ].forEach(function(element) {
-    return dateRow.appendChild(element);
+    dateRow.appendChild(element);
   });
 
-  body.appendChild(dateRow);
+  return dateRow;
+}
+
+function listCalendars() {
+  const body = document.body;
+  const startHour = 9;
+  const endHour = 17;
+
+  const dateParam = getUrlParameter('date') || new Date().getTime();
+  const dayStart = new Date(dateParam);
+  dayStart.setHours(startHour, 0, 0, 0);
+
+  body.appendChild(createElement('h2', formatDate(dayStart)));
+  body.appendChild(nextAndPreviousButtons(dayStart));
 
   const dayEnd = new Date(dayStart.getTime());
   dayEnd.setHours(endHour, 0, 0, 0);
