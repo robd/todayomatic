@@ -220,8 +220,7 @@ function listCalendars() {
 
   body.appendChild(dateRow);
 
-  const dayEnd = new Date();
-  dayEnd.setDate(dayStart.getDate());
+  const dayEnd = new Date(dayStart.getTime());
   dayEnd.setHours(endHour, 0, 0, 0);
 
   const headerRow = createCalendarRowDiv();
